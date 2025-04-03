@@ -60,7 +60,7 @@ export const notificationList = async (req: AuthRequest, res: Response) => {
          * - Skip records for pagination
          * - Limit the number of records returned
          */
-        const notifications = await NotificationModel.find({ userId: _id })
+        const notifications = await NotificationModel.find({ userId: _id }).sort({ createdAt: -1 })
             .skip(skip)
             .limit(limitNumber);
 
