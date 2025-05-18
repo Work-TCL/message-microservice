@@ -13,7 +13,7 @@ const CreatorModel = mongoose.model("Creator", CreatorSchema);
 const MessagesModel = mongoose.model("Messages", MessagesSchema);
 const NotificationModel = mongoose.model("Notification", NotificationSchema);
 const CollaborationModel = mongoose.model("Collaboration", CollaborationSchema);
-const BidModel = mongoose.model("Bid", biddingSchema);
+const BidModel = mongoose.model("Bidding", biddingSchema);
 
 
 export { AccountModel, VendorModel, CreatorModel, MessagesModel, NotificationModel ,CollaborationModel, BidModel};
