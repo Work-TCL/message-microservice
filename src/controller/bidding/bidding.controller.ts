@@ -20,8 +20,8 @@ export const addNewBid = async (body: any) => {
         },
         $set: {
           negotiation: {
-            agreedByCreator: type === "creator",
-            agreedByVendor: type === "vendor",
+            agreedByCreator: sender === "creator",
+            agreedByVendor: sender === "vendor",
           },
         },
       },
