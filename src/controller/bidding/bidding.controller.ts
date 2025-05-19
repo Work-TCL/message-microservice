@@ -11,15 +11,22 @@ export const addNewBid = async (body: any) => {
     });
     const savedBid = await bid.save();
 
-    await CollaborationModel.findByIdAndUpdate(collaborationId, {
-      $push: {
-        bids: savedBid._id,
-        negotiation:{
-          agreedByCreator: type === "creator" ? true : false,
-          agreedByVendor: type === "vendor" ? true : false,
+    // Update Collaboration: push bid, set negotiation object
+    await CollaborationModel.findByIdAndUpdate(
+      collaborationId,
+      {
+        $push: {
+          bids: savedBid._id, // push single ID, not array
+        },
+        $set: {
+          negotiation: {
+            agreedByCreator: type === "creator",
+            agreedByVendor: type === "vendor",
+          },
         },
       },
-    });
+      { new: true }
+    );
 
     return savedBid;
   } catch (e) {
