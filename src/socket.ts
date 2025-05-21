@@ -9,7 +9,8 @@ const httpServer = createServer(app);
 // Initialize Socket.IO server with CORS configuration
 const io = new Server(httpServer, {
   cors: {
-    origin: "*", // Change this to match the frontend's URL in production
+    origin: ["https://trf.trinitysystems.in", "http://localhost:3000"], // Add real production origin
+    // origin: "*", // Change this to match the frontend's URL in production
     methods: ["GET", "POST"],
   },
 });
