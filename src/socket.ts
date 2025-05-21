@@ -85,6 +85,9 @@ export const joinCollaborationRoom = (socket: any, collaborationId: string) => {
   });
   console.log(`User joined collaboration room ${collaborationId}`);
 
+  // Clean up existing listener first if it exists
+  socket.removeAllListeners("collaborationMessage");
+
   /**
    * Listen for new messages in the collaboration room
    * The message is saved to the database and broadcasted to all users in the room
@@ -128,6 +131,9 @@ export const joinCollaborationRoom = (socket: any, collaborationId: string) => {
     socket.emit("leftCollaborationRoom", {
       message: `Left collaboration room ${collaborationId}`,
     });
+
+    // Optional: clean up collaborationMessage listener when leaving
+    socket.removeAllListeners("collaborationMessage");  
   });
 };
 
