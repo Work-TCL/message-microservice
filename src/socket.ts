@@ -2,7 +2,7 @@ import { Server, Socket } from "socket.io";
 import { createServer } from "http";
 import app from "./app";
 import { markAllMessagesRead, markMessagesAsRead, saveCollaborationMessage } from "./controller/collaboration/collaboration.controller";
-import { addNewBid } from "./controller/bidding/bidding.controller";
+import { addNewBid, markAllBidsAsSeen, markBidAsSeen } from "./controller/bidding/bidding.controller";
 
 // Create the HTTP server from Express app
 const httpServer = createServer(app);
@@ -70,6 +70,25 @@ io.on("connection", (socket: Socket) => {
       });
     }
   });
+
+  socket.on("markBidAsSeen", async (data: { bidId: string; type: string; }) => {
+    try {
+      await markBidAsSeen(data.bidId, data.type);
+    } catch (error) {
+      console.error("Error marking bid as seen:", error);
+      socket.emit("error", { message: "Failed to mark bid as seen" });
+    }
+  });
+
+  socket.on("markAllBidsAsSeen", async (data: { collaborationId: string; type: string;}) => {
+    try {
+      await markAllBidsAsSeen(data.collaborationId, data.type);
+    } catch (error) {
+      console.error("Error marking all bids as seen:", error);
+      socket.emit("error", { message: "Failed to mark all bids as seen" }); 
+    }
+  });
+  
 
   /**
    * Handle disconnection
