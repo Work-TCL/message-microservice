@@ -1,4 +1,5 @@
-import { BidModel, CollaborationModel } from "../../database/model";
+import { BidModel, CollaborationModel, NotificationModel, ProductModel } from "../../database/model";
+import { sendNotification } from "../../socket";
 
 export const addNewBid = async (body: any) => {
   try {
@@ -27,6 +28,46 @@ export const addNewBid = async (body: any) => {
       },
       { new: true }
     );
+
+    //send notification
+    const product: any = await CollaborationModel.findById(collaborationId)
+    .select("collaborationStatus") // Select only `status` field from Collaboration
+    .populate({
+      path: "productId",
+      select: "name", // Only include the `name` field from Product
+    })
+    .populate({
+      path: "creatorId",
+      select: "user_name", // Only include `user_name` from Creator
+    })
+    .populate({
+      path: "vendorId",
+      select: "business_name", // Only include `business_name` from Vendor
+    });
+  
+     // Create notification documents for each user
+     
+     if(sender === 'creator'){
+      await NotificationModel.create({
+       userId: product?.vendorId,
+       message: `New bid from creator ${product?.creatorId?.user_name} for product ${product?.productId?.title}`,
+       read: false
+      });
+      sendNotification(
+        [product?.vendorId],
+        `New bid from creator ${product?.creatorId?.user_name} for product ${product?.productId?.title}`
+      );
+    }else{
+      await NotificationModel.create({
+        userId: product?.creatorId,
+        message: `New bid from vendor ${product?.vendorId?.business_name} for product ${product?.productId?.title}`,
+        read: false
+       });
+      sendNotification(
+        [product?.creatorId],
+        `New bid from vendor ${product?.vendorId?.business_name} for product ${product?.productId?.title}`
+      );
+    }
 
     return savedBid;
   } catch (e) {

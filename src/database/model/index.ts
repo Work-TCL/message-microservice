@@ -6,6 +6,7 @@ import NotificationSchema from "../../../../shared-models/src/models/notificatio
 import AccountSchema from "../../../../shared-models/src/models/account";
 import { biddingSchema } from "../../../../shared-models/src/models/collaboration";
 import CollaborationSchema from "../../../../shared-models/src/models/collaboration";
+import ProductSchema from "../../../../shared-models/src/models/product";
 
 const AccountModel = mongoose.model("Account", AccountSchema);
 const VendorModel = mongoose.model("Vendor", VendorSchema);
@@ -13,7 +14,8 @@ const CreatorModel = mongoose.model("Creator", CreatorSchema);
 const MessagesModel = mongoose.model("Messages", MessagesSchema);
 const NotificationModel = mongoose.model("Notification", NotificationSchema);
 const CollaborationModel = mongoose.model("Collaboration", CollaborationSchema);
+const ProductModel = mongoose.model("Product", ProductSchema);
 const BidModel = mongoose.model("Bidding", biddingSchema);
 
 
-export { AccountModel, VendorModel, CreatorModel, MessagesModel, NotificationModel ,CollaborationModel, BidModel};
+export { ProductModel, AccountModel, VendorModel, CreatorModel, MessagesModel, NotificationModel ,CollaborationModel, BidModel};
