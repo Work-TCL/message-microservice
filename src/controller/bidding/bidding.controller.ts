@@ -34,7 +34,7 @@ export const addNewBid = async (body: any) => {
     .select("collaborationStatus") // Select only `status` field from Collaboration
     .populate({
       path: "productId",
-      select: "name", // Only include the `name` field from Product
+      select: "title", // Only include the `name` field from Product
     })
     .populate({
       path: "creatorId",
