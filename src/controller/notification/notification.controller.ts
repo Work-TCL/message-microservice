@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { sendNotification } from "../../socket";
+import { sendCollaborationNotification, sendNotification } from "../../socket";
 import { AuthRequest } from "../../types/authRequest";
 import { NotificationModel } from "../../database/model";
 
@@ -14,6 +14,13 @@ export const sendNotificationFn = async (req: Request, res: Response) => {
     const { userIds, message, userType, notificationType } = req.body;
 
     // Trigger real-time notification via socket
+    if (notificationType === "collaboration") {
+      sendCollaborationNotification(userIds, {
+        message,
+        notificationType,
+        userType,
+      });
+    }
     await sendNotification(userIds, message);
 
     // Create notification documents for each user

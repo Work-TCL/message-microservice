@@ -107,6 +107,12 @@ export const sendNotification = (userIds: string[], message: string) => {
   });
 };
 
+export const sendCollaborationNotification = (userIds: string[], payload: any) => {
+  userIds.forEach((userId) => {
+    io.to(userId).emit("notification",  payload);
+  });
+};
+
 /**
  * Helper: Join a collaboration room and set up collaboration message events
  */
