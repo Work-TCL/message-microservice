@@ -4,7 +4,7 @@ import {
   NotificationModel,
   ProductModel,
 } from "../../database/model";
-import { sendNotification } from "../../socket";
+import { sendCollaborationNotification, sendNotification } from "../../socket";
 
 export const addNewBid = async (body: any) => {
   try {
@@ -57,25 +57,27 @@ export const addNewBid = async (body: any) => {
         userId: product?.vendorId,
         message: `New bid from creator ${product?.creatorId?.user_name} for product ${product?.productId?.title}`,
         read: false,
-        userType: 'creator',
-        notificationType: 'bid'
+        userType: "creator",
+        notificationType: "bid",
       });
-      sendNotification(
-        [product?.vendorId],
-        `New bid from creator ${product?.creatorId?.user_name} for product ${product?.productId?.title}`
-      );
+      sendCollaborationNotification([product?.vendorId], {
+        message: `New bid from creator ${product?.creatorId?.user_name} for product ${product?.productId?.title}`,
+        notificationType: "collaboration",
+        userType: "creator",
+      });
     } else {
       await NotificationModel.create({
         userId: product?.creatorId,
         message: `New bid from vendor ${product?.vendorId?.business_name} for product ${product?.productId?.title}`,
         read: false,
-        userType: 'vendor',
-        notificationType: 'bid'
+        userType: "vendor",
+        notificationType: "bid",
       });
-      sendNotification(
-        [product?.creatorId],
-        `New bid from vendor ${product?.vendorId?.business_name} for product ${product?.productId?.title}`
-      );
+      sendCollaborationNotification([product?.creatorId], {
+        message: `New bid from vendor ${product?.vendorId?.business_name} for product ${product?.productId?.title}`,
+        notificationType: "collaboration",
+        userType: "vendor",
+      });
     }
 
     return savedBid;
