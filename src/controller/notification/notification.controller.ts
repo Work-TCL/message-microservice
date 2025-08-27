@@ -20,8 +20,9 @@ export const sendNotificationFn = async (req: Request, res: Response) => {
         notificationType,
         userType,
       });
+    } else {
+      await sendNotification(userIds, message);
     }
-    await sendNotification(userIds, message);
 
     // Create notification documents for each user
     const notifications = userIds.map((userId: string) => ({
