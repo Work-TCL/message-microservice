@@ -81,12 +81,18 @@ export const notificationList = async (req: AuthRequest, res: Response) => {
 
     // Count the total number of notifications
     const total = await NotificationModel.countDocuments({ userId: _id });
-
+    const unreadCollaborationNotificationsCount =
+    await NotificationModel.countDocuments({
+      userId: _id,
+      read: false,
+      notificationType: "collaboration",
+    });
     return res.status(200).json({
       message: "Notification list fetched successfully",
       data: notifications,
       unreadCount, // Include unread count in response
       total, // Include total notifications count
+      unreadCollaborationNotificationsCount
     });
   } catch (e) {
     console.log("Error in fetching notification list", e);
