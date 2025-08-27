@@ -12,7 +12,7 @@ import { NotificationModel } from "../../database/model";
 export const sendNotificationFn = async (req: Request, res: Response) => {
   try {
     const { userIds, message, userType, notificationType } = req.body;
-
+console.log("object",userIds, message,userType, notificationType)
     // Trigger real-time notification via socket
     if (notificationType === "collaboration") {
       sendCollaborationNotification(userIds, {

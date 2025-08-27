@@ -57,6 +57,8 @@ export const addNewBid = async (body: any) => {
         userId: product?.vendorId,
         message: `New bid from creator ${product?.creatorId?.user_name} for product ${product?.productId?.title}`,
         read: false,
+        userType: 'creator',
+        notificationType: 'bid'
       });
       sendNotification(
         [product?.vendorId],
@@ -67,6 +69,8 @@ export const addNewBid = async (body: any) => {
         userId: product?.creatorId,
         message: `New bid from vendor ${product?.vendorId?.business_name} for product ${product?.productId?.title}`,
         read: false,
+        userType: 'vendor',
+        notificationType: 'bid'
       });
       sendNotification(
         [product?.creatorId],
