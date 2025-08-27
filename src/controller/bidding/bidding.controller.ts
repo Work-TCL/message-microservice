@@ -51,29 +51,29 @@ export const addNewBid = async (body: any) => {
       });
 
     // Create notification documents for each user
-
+console.log("object",product)
     if (sender === "creator") {
       await NotificationModel.create({
-        userId: product?.vendorId,
+        userId: product?.vendorId?._id,
         message: `New bid from creator ${product?.creatorId?.user_name} for product ${product?.productId?.title}`,
         read: false,
         userType: "creator",
         notificationType: "bid",
       });
-      sendCollaborationNotification([product?.vendorId], {
+      sendCollaborationNotification([product?.vendorId?._id], {
         message: `New bid from creator ${product?.creatorId?.user_name} for product ${product?.productId?.title}`,
         notificationType: "collaboration",
         userType: "creator",
       });
     } else {
       await NotificationModel.create({
-        userId: product?.creatorId,
+        userId: product?.creatorId?._id,
         message: `New bid from vendor ${product?.vendorId?.business_name} for product ${product?.productId?.title}`,
         read: false,
         userType: "vendor",
         notificationType: "bid",
       });
-      sendCollaborationNotification([product?.creatorId], {
+      sendCollaborationNotification([product?.creatorId?._id], {
         message: `New bid from vendor ${product?.vendorId?.business_name} for product ${product?.productId?.title}`,
         notificationType: "collaboration",
         userType: "vendor",
