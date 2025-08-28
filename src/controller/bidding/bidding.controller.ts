@@ -51,35 +51,40 @@ export const addNewBid = async (body: any) => {
       });
 
     // Create notification documents for each user
-console.log("object",product)
     if (sender === "creator") {
       await NotificationModel.create({
         userId: product?.vendorId?._id,
         message: `New bid from creator ${product?.creatorId?.user_name} for product ${product?.productId?.title}`,
         read: false,
-        userType: "creator",
-        notificationType: "bid",
-      });
-      sendCollaborationNotification([product?.vendorId?._id], {
-        message: `New bid from creator ${product?.creatorId?.user_name} for product ${product?.productId?.title}`,
+        userType: "vendor",
         notificationType: "collaboration",
-        userType: "creator",
       });
+      sendCollaborationNotification(
+        [String(product?.vendorId?._id)], // force string
+        {
+          message: `New bid from creator ${product?.creatorId?.user_name} for product ${product?.productId?.title}`,
+          notificationType: "collaboration",
+          userType: "vendor",
+        }
+      );
     } else {
       await NotificationModel.create({
         userId: product?.creatorId?._id,
         message: `New bid from vendor ${product?.vendorId?.business_name} for product ${product?.productId?.title}`,
         read: false,
-        userType: "vendor",
-        notificationType: "bid",
-      });
-      sendCollaborationNotification([product?.creatorId?._id], {
-        message: `New bid from vendor ${product?.vendorId?.business_name} for product ${product?.productId?.title}`,
+        userType: "creator",
         notificationType: "collaboration",
-        userType: "vendor",
       });
-    }
 
+      sendCollaborationNotification(
+        [String(product?.creatorId?._id)], // force string
+        {
+          message: `New bid from vendor ${product?.vendorId?.business_name} for product ${product?.productId?.title}`,
+          notificationType: "collaboration",
+          userType: "creator",
+        }
+      );
+    }
     return savedBid;
   } catch (e) {
     console.log("error while adding new bid", e);
