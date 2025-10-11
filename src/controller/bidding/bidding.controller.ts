@@ -65,6 +65,7 @@ export const addNewBid = async (body: any) => {
           message: `New bid from creator ${product?.creatorId?.user_name} for product ${product?.productId?.title}`,
           notificationType: "collaboration",
           userType: "vendor",
+          path: "/vendor/creators/collaboration/" + collaborationId
         }
       );
     } else {
@@ -75,13 +76,14 @@ export const addNewBid = async (body: any) => {
         userType: "creator",
         notificationType: "collaboration",
       });
-
+      
       sendCollaborationNotification(
         [String(product?.creatorId?._id)], // force string
         {
           message: `New bid from vendor ${product?.vendorId?.business_name} for product ${product?.productId?.title}`,
           notificationType: "collaboration",
           userType: "creator",
+          path: "/creator/collaboration/" + collaborationId
         }
       );
     }
