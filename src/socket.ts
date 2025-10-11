@@ -61,12 +61,14 @@ io.on("connection", (socket: Socket) => {
         io.to(collaborationId).emit("newBid", {
           message: `New bid added`,
           data: bid,
+          collaborationId: collaborationId
         });
       }
     } catch (e) {
       console.error("Error while adding new bid", e);
       io.to(collaborationId).emit("bid-error", {
         message: "Failed to add bid",
+        collaborationId
       });
     }
   });
@@ -146,6 +148,7 @@ export const joinCollaborationRoom = (
       if (newMessage) {
         io.to(collaborationId).emit("newCollaborationMessage", {
           message: newMessage,
+          collaborationId
         });
       }
     } catch (error) {
