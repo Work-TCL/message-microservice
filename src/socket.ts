@@ -1,107 +1,202 @@
-import { Server } from 'socket.io';
-import { createServer } from 'http';
-import app from './app';
-import { saveCollaborationMessage } from './controller/collaboration/collaboration.controller';
+import { Server, Socket } from "socket.io";
+import { createServer } from "http";
+import app from "./app";
+import { markAllMessagesRead, markMessagesAsRead, saveCollaborationMessage } from "./controller/collaboration/collaboration.controller";
+import { addNewBid, markAllBidsAsSeen, markBidAsSeen } from "./controller/bidding/bidding.controller";
 
+// Create the HTTP server from Express app
 const httpServer = createServer(app);
 
-// Initialize Socket.IO server with CORS configuration
+// Initialize Socket.IO with proper CORS config
 const io = new Server(httpServer, {
-    cors: {
-        origin: "*", // Change this to match the frontend's URL in production
-        methods: ["GET", "POST"]
-    }
+  cors: {
+    origin: "*", // ⚠️ Use specific domains in production
+  },
 });
 
-// Handle socket connection event
-io.on('connection', (socket) => {
-    console.log('A user connected');
+// Types for events
+interface BidRequestData {
+  collaborationId: string;
+  proposal: number;
+  type: "PERCENTAGE" | "FIXED_AMOUNT";
+  sender: "vendor" | "creator";
+}
 
-    /**
-     * Register a user and associate them with a unique socket room (userId)
-     * This helps in sending targeted notifications/messages
-     */
-    socket.on('register', (userId: string) => {
-        socket.join(userId);
-        console.log(`User ${userId} registered`);
-    });
+interface CollaborationMessageData {
+  message: string;
+  creatorId?: string;
+  vendorId?: string;
+}
 
-    /**
-     * Join a collaboration room based on the provided collaborationId
-     * Enables real-time messaging in a specific collaboration space
-     */
-    socket.on('joinCollaboration', (collaborationId: string) => {
-        joinCollaborationRoom(socket, collaborationId);
-    });
+/**
+ * Handle new socket connections
+ */
+io.on("connection", (socket: Socket) => {
+  console.log("A user connected");
 
-    // Handle user disconnect event
-    socket.on('disconnect', () => {
-        console.log('User disconnected');
-    });
+  /**
+   * Register user to a personal room for private messaging or notifications
+   */
+  socket.on("register", (userId: string) => {
+    socket.join(userId);
+    console.log(`User ${userId} registered`);
+  });
+
+  /**
+   * Join a collaboration room (used for chat and bidding in a collab)
+   */
+  socket.on("joinCollaboration", (collaborationId: string) => {
+    joinCollaborationRoom(socket, collaborationId);
+  });
+
+  /**
+   * Handle incoming bid request
+   */
+  socket.on("bidRequest", async (body: BidRequestData) => {
+    const { collaborationId } = body;
+    try {
+      const bid = await addNewBid(body);
+
+      if (bid) {
+        io.to(collaborationId).emit("newBid", {
+          message: `New bid added`,
+          data: bid,
+          collaborationId: collaborationId
+        });
+      }
+    } catch (e) {
+      console.error("Error while adding new bid", e);
+      io.to(collaborationId).emit("bid-error", {
+        message: "Failed to add bid",
+        collaborationId
+      });
+    }
+  });
+
+  socket.on("markBidAsSeen", async (data: { bidId: string; type: string; }) => {
+    try {
+      await markBidAsSeen(data.bidId, data.type);
+    } catch (error) {
+      console.error("Error marking bid as seen:", error);
+      socket.emit("error", { message: "Failed to mark bid as seen" });
+    }
+  });
+
+  socket.on("markAllBidsAsSeen", async (data: { collaborationId: string; type: string;}) => {
+    try {
+      await markAllBidsAsSeen(data.collaborationId, data.type);
+    } catch (error) {
+      console.error("Error marking all bids as seen:", error);
+      socket.emit("error", { message: "Failed to mark all bids as seen" }); 
+    }
+  });
+  
+
+  /**
+   * Handle disconnection
+   */
+  socket.on("disconnect", () => {
+    console.log("User disconnected");
+  });
 });
 
 /**
- * Send real-time notifications to specific users
- * 
- * @param userIds - Array of user IDs to send notifications to
- * @param message - Notification message
+ * Helper: Send notification to specific users by ID
  */
 export const sendNotification = (userIds: string[], message: string) => {
-    userIds.forEach(userId => {
-        io.to(userId).emit('notification', { message });
-    });
+  userIds.forEach((userId) => {
+    io.to(userId).emit("notification", { message });
+  });
+};
+
+export const sendCollaborationNotification = (userIds: string[], payload: any) => {
+  userIds.forEach((userId) => {
+    io.to(userId).emit("notification",  payload);
+  });
 };
 
 /**
- * Handle joining a collaboration room
- * 
- * @param socket - The socket instance of the connected user
- * @param collaborationId - ID of the collaboration room
+ * Helper: Join a collaboration room and set up collaboration message events
  */
-export const joinCollaborationRoom = (socket: any, collaborationId: string) => {
-    socket.join(collaborationId);
-    socket.emit('joinedCollaborationRoom', {
-        message: `Joined collaboration room successfully: ${collaborationId}`
-    });
-    console.log(`User joined collaboration room ${collaborationId}`);
+export const joinCollaborationRoom = (
+  socket: Socket,
+  collaborationId: string
+) => {
+  socket.join(collaborationId);
+  socket.emit("joinedCollaborationRoom", {
+    message: `Joined collaboration room successfully: ${collaborationId}`,
+  });
+  console.log(`User joined collaboration room ${collaborationId}`);
 
-    /**
-     * Listen for new messages in the collaboration room
-     * The message is saved to the database and broadcasted to all users in the room
-     */
-    socket.on('collaborationMessage', async (data: { message: string; creatorId?: string; vendorId?: string }) => {
-        try {
-            console.log("data",data)
-            // Save the message using the controller function
-            const newMessage = await saveCollaborationMessage({
-                collaborationId,
-                message: data.message,
-                creatorId: data.creatorId,
-                vendorId: data.vendorId,
-            });
+  // Clean up existing listener for that room
+  socket.removeAllListeners("collaborationMessage");
 
-            if (newMessage) {
-                // Broadcast the new message to all users in the room
-                io.to(collaborationId).emit('newCollaborationMessage', {
-                    message: newMessage
-                });
-            }
-        } catch (error) {
-            // Send error message if message saving fails
-            socket.emit('error', { message: 'Failed to send message' });
-        }
-    });
+  /**
+   * Handle collaboration messages (chat-style)
+   */
+  socket.on("collaborationMessage", async (data: CollaborationMessageData) => {
+    try {
+      console.log("Collaboration message received:", data);
 
-    /**
-     * Handle user leaving the collaboration room
-     * The user is removed from the socket room
-     */
-    socket.on('leaveCollaboration', () => {
-        socket.leave(collaborationId);
-        socket.emit('leftCollaborationRoom', {
-            message: `Left collaboration room ${collaborationId}`
+      const newMessage = await saveCollaborationMessage({
+        collaborationId,
+        message: data.message,
+        creatorId: data.creatorId,
+        vendorId: data.vendorId,
+      });
+
+      if (newMessage) {
+        io.to(collaborationId).emit("newCollaborationMessage", {
+          message: newMessage,
+          collaborationId
         });
+      }
+    } catch (error) {
+      console.error("Error saving collaboration message", error);
+      socket.emit("error", { message: "Failed to send message" });
+    }
+  });
+
+  // Inside `joinCollaborationRoom` after other socket events
+  socket.on(
+    "markMessagesAsRead",
+    async (data: { collaborationId: string; vendorId?: string; creatorId?: string; }) => {
+      try {
+        await markMessagesAsRead(data.collaborationId, data.vendorId, data.creatorId);
+
+        // Optionally notify other users in the room
+        // socket.to(data.collaborationId).emit("messagesRead", {
+        //   collaborationId: data.collaborationId,
+        //   userId: data.userId,
+        // });
+      } catch (error) {
+        console.error("Error marking messages as read:", error);
+        socket.emit("error", { message: "Failed to mark messages as read" });
+      }
+    }
+  );
+
+  socket.on("markAllMessagesAsRead", async (data: { collaborationId: string; type: string}) => {
+    try {
+      await markAllMessagesRead(data.collaborationId, data.type);
+    } catch (error) {
+      console.error("Error marking all messages as read:", error);
+      socket.emit("error", { message: "Failed to mark all messages as read" });
+    }
+  });
+  /**
+   * Allow user to leave collaboration room
+   */
+  socket.on("leaveCollaboration", () => {
+    socket.leave(collaborationId);
+    socket.emit("leftCollaborationRoom", {
+      message: `Left collaboration room ${collaborationId}`,
     });
+
+    // Remove chat listener to avoid memory leaks
+    socket.removeAllListeners("collaborationMessage");
+  });
 };
 
+// Export initialized server and socket instance
 export { io, httpServer };
