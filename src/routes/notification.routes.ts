@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { commonAuthMiddleware } from '../middlewares/commonAuth.middleware';
-import { getUnreadNotifications, markRead, notificationList, sendNotificationFn } from '../controller/notification/notification.controller';
+import { getUnreadNotifications, markCollaborationRead, markRead, notificationList, sendNotificationFn } from '../controller/notification/notification.controller';
 
 const router = Router();
 
@@ -12,5 +12,6 @@ router.get('/unread', commonAuthMiddleware, getUnreadNotifications); // get unre
 
 router.put('/mark-read', commonAuthMiddleware, markRead)//mark read
 
+router.put('/mark-collaboration-read', commonAuthMiddleware, markCollaborationRead)//mark read
 
 export { router as notificationRouter }; 
