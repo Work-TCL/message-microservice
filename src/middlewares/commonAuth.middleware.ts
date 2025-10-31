@@ -24,7 +24,6 @@ export const commonAuthMiddleware = async (req: AuthRequest, res: Response, next
     try {
         // Verify and decode the JWT token
         const decoded: any = jwt.verify(token, SECRET_KEY);
-        console.log("Decoded token:", decoded);
 
         // Find the account by ID
         const account = await AccountModel.findById(decoded._id);
@@ -48,11 +47,12 @@ export const commonAuthMiddleware = async (req: AuthRequest, res: Response, next
 
         // Attach user info to request object
         req.user = user;
-        req.userRole = account.type; // Store role for further authorization checks if needed
+        req.userRole = account.type || ""; // Store role for further authorization checks if needed
 
         // Proceed to the next middleware or route handler
         next();
     } catch (error) {
+        console.log("error", error);
         if (error instanceof jwt.TokenExpiredError) {
             return sendApiResponse(res, 401, "Token expired. Please login again.");
         }
