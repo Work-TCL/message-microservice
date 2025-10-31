@@ -100,3 +100,25 @@ export const saveCollaborationMessage = async (body: { collaborationId: string, 
         return null;
     }
 };
+
+export const markMessagesAsRead = async (
+  collaborationId: string,
+  vendorId?: string,
+  creatorId?: string
+) => {
+  await MessagesModel.updateMany(
+    {
+      collaborationId,
+      ...(vendorId && { vendorId }),
+      ...(creatorId && { creatorId })
+    },
+    { $set: { isRead: true } }
+  );
+};
+
+export const markAllMessagesRead = async (collaborationId: string, type: string) => {
+    await MessagesModel.updateMany(
+        { collaborationId, ...(type === "vendor" ? { creatorId : {$exists: true} }: { vendorId : {$exists: true} }) },
+        { $set: { isRead: true } }
+    );
+};
